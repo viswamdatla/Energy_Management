@@ -287,8 +287,8 @@ function updateStats() {
 // Update stats every 5 seconds
 setInterval(updateStats, 5000);
 
-// Fetch Google Sheets data every 30 seconds to keep data fresh
-setInterval(fetchGoogleSheetsData, 30000);
+// Fetch Google Sheets data every 2 seconds to keep data fresh
+setInterval(fetchGoogleSheetsData, 2000);
 
 // Initial fetch on page load
 window.addEventListener('load', () => {
