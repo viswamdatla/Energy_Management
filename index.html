@@ -10,7 +10,46 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Page -->
+    <div class="login-container" id="loginPage">
+        <div class="login-box">
+            <div class="login-header">
+                <div class="login-logo">
+                    <div class="login-logo-icon">⚡</div>
+                    <h1>PowerGuard</h1>
+                </div>
+                <p class="login-subtitle">UPS Management System</p>
+            </div>
+            
+            <form class="login-form" id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">👤 Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">🔒 Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+                
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="rememberMe">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="login-btn">Sign In</button>
+                
+                <div class="login-footer">
+                    <p>Default credentials: admin / admin123</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="container" id="mainApp" style="display: none;">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
@@ -27,12 +66,24 @@
                     <span>Dashboard</span>
                 </a>
                 <a href="#" class="nav-item">
+                    <span class="nav-icon">⚡</span>
+                    <span>Energy Meter</span>
+                </a>
+                <a href="#" class="nav-item">
                     <span class="nav-icon">📺</span>
                     <span>UPS Devices</span>
                 </a>
                 <a href="#" class="nav-item">
+                    <span class="nav-icon">💧</span>
+                    <span>Water Consumption</span>
+                </a>
+                <a href="#" class="nav-item">
                     <span class="nav-icon">📋</span>
                     <span>Reports</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <span class="nav-icon">🏷️</span>
+                    <span>Asset Tagging</span>
                 </a>
                 <a href="#" class="nav-item">
                     <span class="nav-icon">⚙️</span>
@@ -60,6 +111,7 @@
                             <span class="user-name">Admin User</span>
                             <span class="user-role">Enterprise</span>
                         </div>
+                        <button class="logout-btn" onclick="logout()" title="Logout">🔒 Logout</button>
                     </div>
                 </div>
             </header>
@@ -68,212 +120,426 @@
             <div class="dashboard-content" id="dashboardPage">
                 <div class="page-header">
                     <h1>Dashboard</h1>
-                    <p>Real-time overview of your UPS infrastructure</p>
+                    <p>Real-time overview of your infrastructure</p>
                 </div>
 
-                <!-- Device Cards Grid -->
-                <div class="device-cards-grid">
-                    <!-- Device Card 1 -->
-                    <div class="device-card">
-                        <div class="device-card-header">
-                            <h3>UPS-DC-001</h3>
+                <!-- Dashboard Overview Sections -->
+                <div class="dashboard-sections">
+                    <!-- Energy Meter Summary -->
+                    <div class="dashboard-section">
+                        <div class="dashboard-section-header">
+                            <h2>⚡ Energy Meter</h2>
+                            <a href="#" class="view-details-btn" onclick="navigateToPage(event, 'Energy Meter')">View Details →</a>
                         </div>
-                        <div class="device-card-info">
-                            <div class="device-model">APC Smart-UPS</div>
-                        </div>
-                        <div class="device-card-metrics">
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">⚡</span> Voltage
-                                </div>
-                                <div class="metric-value-large">230V</div>
+                        <div class="dashboard-summary-grid">
+                            <div class="summary-card">
+                                <div class="summary-label">EB Running Unit</div>
+                                <div class="summary-value" id="dashEbUnit">1234.56 kWh</div>
                             </div>
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">📊</span> Load
-                                </div>
-                                <div class="metric-value-large">62%</div>
+                            <div class="summary-card">
+                                <div class="summary-label">EB Load</div>
+                                <div class="summary-value" id="dashEbLoad">75.5%</div>
                             </div>
-                        </div>
-                        <div class="device-card-footer">
-                            <div class="footer-metric">
-                                <div class="footer-label">Current</div>
-                                <div class="footer-value">43.5A</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Generator Unit</div>
+                                <div class="summary-value" id="dashGenUnit">856.43 kWh</div>
                             </div>
-                            <div class="footer-metric">
-                                <div class="footer-label">Runtime</div>
-                                <div class="footer-value">45min</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Generator Load</div>
+                                <div class="summary-value" id="dashGenLoad">45.2%</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Device Card 2 -->
-                    <div class="device-card">
-                        <div class="device-card-header">
-                            <h3>UPS-DC-002</h3>
+                    <!-- UPS Devices Summary -->
+                    <div class="dashboard-section">
+                        <div class="dashboard-section-header">
+                            <h2>📺 UPS Devices</h2>
+                            <a href="#" class="view-details-btn" onclick="navigateToPage(event, 'UPS Devices')">View Details →</a>
                         </div>
-                        <div class="device-card-info">
-                            <div class="device-model">Eaton 9PX</div>
-                        </div>
-                        <div class="device-card-metrics">
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">⚡</span> Voltage
-                                </div>
-                                <div class="metric-value-large">230V</div>
+                        <div class="dashboard-summary-grid">
+                            <div class="summary-card">
+                                <div class="summary-label">Total Devices</div>
+                                <div class="summary-value" id="dashTotalUps">6</div>
                             </div>
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">📊</span> Load
-                                </div>
-                                <div class="metric-value-large">78%</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Avg Voltage</div>
+                                <div class="summary-value" id="dashAvgVoltage">230V</div>
                             </div>
-                        </div>
-                        <div class="device-card-footer">
-                            <div class="footer-metric">
-                                <div class="footer-label">Current</div>
-                                <div class="footer-value">26.1A</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Avg Load</div>
+                                <div class="summary-value" id="dashAvgLoad">65.8%</div>
                             </div>
-                            <div class="footer-metric">
-                                <div class="footer-label">Runtime</div>
-                                <div class="footer-value">32min</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Total Runtime</div>
+                                <div class="summary-value" id="dashTotalRuntime">225min</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Device Card 3 -->
-                    <div class="device-card">
-                        <div class="device-card-header">
-                            <h3>UPS-DC-003</h3>
+                    <!-- Water Consumption Summary -->
+                    <div class="dashboard-section">
+                        <div class="dashboard-section-header">
+                            <h2>💧 Water Consumption</h2>
+                            <a href="#" class="view-details-btn" onclick="navigateToPage(event, 'Water Consumption')">View Details →</a>
                         </div>
-                        <div class="device-card-info">
-                            <div class="device-model">Vertiv Liebert</div>
-                        </div>
-                        <div class="device-card-metrics">
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">⚡</span> Voltage
-                                </div>
-                                <div class="metric-value-large">230V</div>
+                        <div class="dashboard-summary-grid">
+                            <div class="summary-card">
+                                <div class="summary-label">Cafeteria</div>
+                                <div class="summary-value" id="dashCafeteria">1,245 L</div>
                             </div>
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">📊</span> Load
-                                </div>
-                                <div class="metric-value-large">45%</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Wash Area</div>
+                                <div class="summary-value" id="dashWashArea">856 L</div>
                             </div>
-                        </div>
-                        <div class="device-card-footer">
-                            <div class="footer-metric">
-                                <div class="footer-label">Current</div>
-                                <div class="footer-value">22.8A</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Pantry</div>
+                                <div class="summary-value" id="dashPantry">432 L</div>
                             </div>
-                            <div class="footer-metric">
-                                <div class="footer-label">Runtime</div>
-                                <div class="footer-value">67min</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Kitchen</div>
+                                <div class="summary-value" id="dashKitchen">1,876 L</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Device Card 4 -->
-                    <div class="device-card">
-                        <div class="device-card-header">
-                            <h3>UPS-DC-004</h3>
+                    <!-- Asset Tracking Summary -->
+                    <div class="dashboard-section">
+                        <div class="dashboard-section-header">
+                            <h2>🏷️ Asset Tracking</h2>
+                            <a href="#" class="view-details-btn" onclick="navigateToPage(event, 'Asset Tagging')">View Details →</a>
                         </div>
-                        <div class="device-card-info">
-                            <div class="device-model">Schneider Galaxy</div>
-                        </div>
-                        <div class="device-card-metrics">
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">⚡</span> Voltage
-                                </div>
-                                <div class="metric-value-large">230V</div>
+                        <div class="dashboard-summary-grid">
+                            <div class="summary-card">
+                                <div class="summary-label">Total Assets</div>
+                                <div class="summary-value" id="dashTotalAssets">15</div>
                             </div>
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">📊</span> Load
-                                </div>
-                                <div class="metric-value-large">88%</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Active</div>
+                                <div class="summary-value" id="dashActiveAssets">12</div>
                             </div>
-                        </div>
-                        <div class="device-card-footer">
-                            <div class="footer-metric">
-                                <div class="footer-label">Current</div>
-                                <div class="footer-value">15.2A</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Maintenance</div>
+                                <div class="summary-value" id="dashMaintenanceAssets">2</div>
                             </div>
-                            <div class="footer-metric">
-                                <div class="footer-label">Runtime</div>
-                                <div class="footer-value">18min</div>
+                            <div class="summary-card">
+                                <div class="summary-label">Inactive</div>
+                                <div class="summary-value" id="dashInactiveAssets">1</div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Device Card 5 -->
-                    <div class="device-card">
-                        <div class="device-card-header">
-                            <h3>UPS-DC-005</h3>
-                        </div>
-                        <div class="device-card-info">
-                            <div class="device-model">APC Smart-UPS</div>
-                        </div>
-                        <div class="device-card-metrics">
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">⚡</span> Voltage
-                                </div>
-                                <div class="metric-value-large">230V</div>
-                            </div>
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">📊</span> Load
-                                </div>
-                                <div class="metric-value-large">55%</div>
-                            </div>
-                        </div>
-                        <div class="device-card-footer">
-                            <div class="footer-metric">
-                                <div class="footer-label">Current</div>
-                                <div class="footer-value">34.8A</div>
-                            </div>
-                            <div class="footer-metric">
-                                <div class="footer-label">Runtime</div>
-                                <div class="footer-value">52min</div>
+            <!-- Energy Meter Page -->
+            <div class="energy-meter-content" id="energyMeterPage" style="display: none;">
+                <div class="page-header">
+                    <h1>Energy Meter</h1>
+                    <p>Real-time energy monitoring and consumption tracking</p>
+                </div>
+
+                <!-- EB Section -->
+                <div class="energy-section">
+                    <div class="section-header">
+                        <div class="section-header-content">
+                            <h2>🔌 EB</h2>
+                            <div class="header-right-controls">
+                                <select class="model-selector" id="ebModelSelector" onchange="switchEBModel(this.value)">
+                                    <option value="eb1">EB Main - Building A</option>
+                                    <option value="eb2">EB Secondary - Building B</option>
+                                    <option value="eb3">EB Backup - Building C</option>
+                                    <option value="eb4">EB Floor 1 - East Wing</option>
+                                    <option value="eb5">EB Floor 2 - West Wing</option>
+                                </select>
+                                <button class="toggle-btn" id="ebToggleBtn" onclick="toggleEnergySection('eb')">
+                                    <span class="toggle-text">Show Less</span>
+                                    <span class="toggle-icon">▲</span>
+                                </button>
                             </div>
                         </div>
                     </div>
+                    <div class="energy-metrics-grid" id="ebMetrics">
+                        <!-- EB Running Unit Card -->
+                        <div class="metric-card">
+                            <div class="metric-card-header">
+                                <span class="metric-icon">⚡</span>
+                                <h3>Running Unit</h3>
+                            </div>
+                            <div class="metric-card-body">
+                                <div class="metric-value" id="ebRunningUnit">1234.56</div>
+                                <div class="metric-unit">kWh</div>
+                            </div>
+                            <div class="metric-card-footer">
+                                <span class="metric-status status-active">Active</span>
+                            </div>
+                        </div>
 
-                    <!-- Device Card 6 -->
-                    <div class="device-card">
-                        <div class="device-card-header">
-                            <h3>UPS-DC-006</h3>
-                        </div>
-                        <div class="device-card-info">
-                            <div class="device-model">Eaton 9PX</div>
-                        </div>
-                        <div class="device-card-metrics">
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">⚡</span> Voltage
-                                </div>
-                                <div class="metric-value-large">230V</div>
+                        <!-- EB Load Card -->
+                        <div class="metric-card">
+                            <div class="metric-card-header">
+                                <span class="metric-icon">📊</span>
+                                <h3>Load</h3>
                             </div>
-                            <div class="metric-row">
-                                <div class="metric-label">
-                                    <span class="metric-icon">📊</span> Load
-                                </div>
-                                <div class="metric-value-large">70%</div>
+                            <div class="metric-card-body">
+                                <div class="metric-value" id="ebLoad">75.5</div>
+                                <div class="metric-unit">%</div>
+                            </div>
+                            <div class="metric-card-footer">
+                                <span class="metric-status status-normal">Normal</span>
                             </div>
                         </div>
-                        <div class="device-card-footer">
-                            <div class="footer-metric">
-                                <div class="footer-label">Current</div>
-                                <div class="footer-value">21.7A</div>
+
+                        <!-- EB Frequency Card -->
+                        <div class="metric-card">
+                            <div class="metric-card-header">
+                                <span class="metric-icon">📡</span>
+                                <h3>Frequency</h3>
                             </div>
-                            <div class="footer-metric">
-                                <div class="footer-label">Runtime</div>
-                                <div class="footer-value">35min</div>
+                            <div class="metric-card-body">
+                                <div class="metric-value" id="ebFrequency">50.02</div>
+                                <div class="metric-unit">Hz</div>
                             </div>
+                            <div class="metric-card-footer">
+                                <span class="metric-status status-normal">Normal</span>
+                            </div>
+                        </div>
+
+                        <!-- EB Previous Unit Card -->
+                        <div class="metric-card">
+                            <div class="metric-card-header">
+                                <span class="metric-icon">📅</span>
+                                <h3>Previous Unit</h3>
+                            </div>
+                            <div class="metric-card-body">
+                                <div class="metric-value" id="ebPreviousUnit">998.32</div>
+                                <div class="metric-unit">kWh</div>
+                            </div>
+                            <div class="metric-card-footer">
+                                <span class="metric-info">Last Month</span>
+                            </div>
+                        </div>
+
+                        <!-- EB Power Factor Card -->
+                        <div class="metric-card">
+                            <div class="metric-card-header">
+                                <span class="metric-icon">⚙️</span>
+                                <h3>Power Factor</h3>
+                            </div>
+                            <div class="metric-card-body">
+                                <div class="metric-value" id="ebPowerFactor">0.95</div>
+                                <div class="metric-unit">PF</div>
+                            </div>
+                            <div class="metric-card-footer">
+                                <span class="metric-status status-good">Good</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generator Section -->
+                <div class="energy-section">
+                    <div class="section-header">
+                        <div class="section-header-content">
+                            <h2>⚙️ Generator</h2>
+                            <div class="header-right-controls">
+                                <select class="model-selector" id="genModelSelector" onchange="switchGeneratorModel(this.value)">
+                                    <option value="gen1">Generator 1 - Main Building</option>
+                                    <option value="gen2">Generator 2 - Backup</option>
+                                    <option value="gen3">Generator 3 - Emergency</option>
+                                    <option value="gen4">Generator 4 - Data Center</option>
+                                </select>
+                                <button class="toggle-btn" id="genToggleBtn" onclick="toggleGeneratorSection('gen')">
+                                    <span class="toggle-text">Show Less</span>
+                                    <span class="toggle-icon">▲</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="energy-metrics-grid" id="genMetrics">
+                        <!-- Generator Running Unit Card -->
+                        <div class="metric-card">
+                            <div class="metric-card-header">
+                                <span class="metric-icon">⚡</span>
+                                <h3>Running Unit</h3>
+                            </div>
+                            <div class="metric-card-body">
+                                <div class="metric-value" id="genRunningUnit">856.43</div>
+                                <div class="metric-unit">kWh</div>
+                            </div>
+                            <div class="metric-card-footer">
+                                <span class="metric-status status-active">Active</span>
+                            </div>
+                        </div>
+
+                        <!-- Generator Load Card -->
+                        <div class="metric-card">
+                            <div class="metric-card-header">
+                                <span class="metric-icon">📊</span>
+                                <h3>Load</h3>
+                            </div>
+                            <div class="metric-card-body">
+                                <div class="metric-value" id="genLoad">45.2</div>
+                                <div class="metric-unit">%</div>
+                            </div>
+                            <div class="metric-card-footer">
+                                <span class="metric-status status-normal">Normal</span>
+                            </div>
+                        </div>
+
+                        <!-- Generator Frequency Card -->
+                        <div class="metric-card">
+                            <div class="metric-card-header">
+                                <span class="metric-icon">📡</span>
+                                <h3>Frequency</h3>
+                            </div>
+                            <div class="metric-card-body">
+                                <div class="metric-value" id="genFrequency">50.01</div>
+                                <div class="metric-unit">Hz</div>
+                            </div>
+                            <div class="metric-card-footer">
+                                <span class="metric-status status-normal">Normal</span>
+                            </div>
+                        </div>
+
+                        <!-- Generator Previous Unit Card -->
+                        <div class="metric-card">
+                            <div class="metric-card-header">
+                                <span class="metric-icon">📅</span>
+                                <h3>Previous Unit</h3>
+                            </div>
+                            <div class="metric-card-body">
+                                <div class="metric-value" id="genPreviousUnit">723.18</div>
+                                <div class="metric-unit">kWh</div>
+                            </div>
+                            <div class="metric-card-footer">
+                                <span class="metric-info">Last Month</span>
+                            </div>
+                        </div>
+
+                        <!-- Generator Power Factor Card -->
+                        <div class="metric-card">
+                            <div class="metric-card-header">
+                                <span class="metric-icon">⚙️</span>
+                                <h3>Power Factor</h3>
+                            </div>
+                            <div class="metric-card-body">
+                                <div class="metric-value" id="genPowerFactor">0.92</div>
+                                <div class="metric-unit">PF</div>
+                            </div>
+                            <div class="metric-card-footer">
+                                <span class="metric-status status-good">Good</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Water Consumption Page -->
+            <div class="water-consumption-content" id="waterConsumptionPage" style="display: none;">
+                <div class="page-header">
+                    <h1>Water Consumption</h1>
+                    <p>Track water usage across different areas of the facility</p>
+                </div>
+
+                <!-- Water Consumption Metrics Grid -->
+                <div class="water-metrics-grid">
+                    <!-- Cafeteria Card -->
+                    <div class="water-card">
+                        <div class="water-card-header">
+                            <span class="water-icon">🍽️</span>
+                            <h3>Cafeteria</h3>
+                        </div>
+                        <div class="water-card-body">
+                            <div class="water-value" id="cafeteriaWater">1,245</div>
+                            <div class="water-unit">Liters</div>
+                        </div>
+                        <div class="water-card-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Today</span>
+                                <span class="detail-value" id="cafeteriaToday">245 L</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">This Week</span>
+                                <span class="detail-value" id="cafeteriaWeek">1,245 L</span>
+                            </div>
+                        </div>
+                        <div class="water-card-footer">
+                            <span class="consumption-status status-medium">Medium Usage</span>
+                        </div>
+                    </div>
+
+                    <!-- Wash Area Card -->
+                    <div class="water-card">
+                        <div class="water-card-header">
+                            <span class="water-icon">🚿</span>
+                            <h3>Wash Area</h3>
+                        </div>
+                        <div class="water-card-body">
+                            <div class="water-value" id="washAreaWater">856</div>
+                            <div class="water-unit">Liters</div>
+                        </div>
+                        <div class="water-card-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Today</span>
+                                <span class="detail-value" id="washAreaToday">178 L</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">This Week</span>
+                                <span class="detail-value" id="washAreaWeek">856 L</span>
+                            </div>
+                        </div>
+                        <div class="water-card-footer">
+                            <span class="consumption-status status-normal">Normal Usage</span>
+                        </div>
+                    </div>
+
+                    <!-- Pantry Card -->
+                    <div class="water-card">
+                        <div class="water-card-header">
+                            <span class="water-icon">☕</span>
+                            <h3>Pantry</h3>
+                        </div>
+                        <div class="water-card-body">
+                            <div class="water-value" id="pantryWater">432</div>
+                            <div class="water-unit">Liters</div>
+                        </div>
+                        <div class="water-card-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Today</span>
+                                <span class="detail-value" id="pantryToday">89 L</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">This Week</span>
+                                <span class="detail-value" id="pantryWeek">432 L</span>
+                            </div>
+                        </div>
+                        <div class="water-card-footer">
+                            <span class="consumption-status status-low">Low Usage</span>
+                        </div>
+                    </div>
+
+                    <!-- Kitchen Card -->
+                    <div class="water-card">
+                        <div class="water-card-header">
+                            <span class="water-icon">🍳</span>
+                            <h3>Kitchen</h3>
+                        </div>
+                        <div class="water-card-body">
+                            <div class="water-value" id="kitchenWater">1,876</div>
+                            <div class="water-unit">Liters</div>
+                        </div>
+                        <div class="water-card-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Today</span>
+                                <span class="detail-value" id="kitchenToday">312 L</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">This Week</span>
+                                <span class="detail-value" id="kitchenWeek">1,876 L</span>
+                            </div>
+                        </div>
+                        <div class="water-card-footer">
+                            <span class="consumption-status status-high">High Usage</span>
                         </div>
                     </div>
                 </div>
@@ -604,6 +870,121 @@
                                 Generate Report
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Asset Tagging Page -->
+            <div class="asset-tagging-content" id="assetTaggingPage" style="display: none;">
+                <div class="page-header">
+                    <h1>Asset Tagging</h1>
+                    <p>Manage and track all assets with unique identifiers</p>
+                </div>
+
+                <!-- Asset Tagging Form -->
+                <div class="asset-form-container">
+                    <div class="asset-form-card">
+                        <h2>🏷️ Add New Asset</h2>
+                        <form class="asset-form" id="assetForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Asset ID</label>
+                                    <input type="text" id="assetId" placeholder="e.g., AST-001" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Asset Name</label>
+                                    <input type="text" id="assetName" placeholder="Enter asset name" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <select id="assetCategory" required>
+                                        <option value="">Select category</option>
+                                        <option value="ups">UPS Device</option>
+                                        <option value="energy">Energy Meter</option>
+                                        <option value="water">Water Meter</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Location</label>
+                                    <input type="text" id="assetLocation" placeholder="Enter location" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Purchase Date</label>
+                                    <input type="date" id="assetPurchaseDate" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select id="assetStatus" required>
+                                        <option value="active">Active</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea id="assetDescription" rows="3" placeholder="Enter asset description"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="submit-asset-btn">Add Asset</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Assets List -->
+                <div class="assets-list-container">
+                    <h2>📋 Registered Assets</h2>
+                    <div class="assets-table-wrapper">
+                        <table class="assets-table">
+                            <thead>
+                                <tr>
+                                    <th>Asset ID</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Location</th>
+                                    <th>Purchase Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assetsTableBody">
+                                <tr>
+                                    <td>AST-001</td>
+                                    <td>UPS Main Building</td>
+                                    <td><span class="category-badge category-ups">UPS Device</span></td>
+                                    <td>Floor 1, Room 101</td>
+                                    <td>2024-01-15</td>
+                                    <td><span class="status-badge status-active">Active</span></td>
+                                    <td><button class="action-btn">Edit</button></td>
+                                </tr>
+                                <tr>
+                                    <td>AST-002</td>
+                                    <td>Energy Meter EB</td>
+                                    <td><span class="category-badge category-energy">Energy Meter</span></td>
+                                    <td>Main Entrance</td>
+                                    <td>2024-02-20</td>
+                                    <td><span class="status-badge status-active">Active</span></td>
+                                    <td><button class="action-btn">Edit</button></td>
+                                </tr>
+                                <tr>
+                                    <td>AST-003</td>
+                                    <td>Water Meter Cafeteria</td>
+                                    <td><span class="category-badge category-water">Water Meter</span></td>
+                                    <td>Cafeteria Area</td>
+                                    <td>2024-03-10</td>
+                                    <td><span class="status-badge status-active">Active</span></td>
+                                    <td><button class="action-btn">Edit</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
