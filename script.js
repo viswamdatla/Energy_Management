@@ -5,6 +5,81 @@ const GOOGLE_SHEETS_CONFIG = {
     range: 'Form Responses 1!B:H', // Columns: TIMESTAMP (B), MACHINE NUMBER (C), VOLTAGE (D), CURRENT (E), LOAD (F), RUNTIME (G), IMAGE (H)
 };
 
+// Login credentials (in production, this should be handled server-side)
+const VALID_CREDENTIALS = {
+    'admin': 'admin123',
+    'user': 'user123',
+    'demo': 'demo123'
+};
+
+// Handle login
+function handleLogin(event) {
+    event.preventDefault();
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const rememberMe = document.getElementById('rememberMe').checked;
+    
+    // Validate credentials
+    if (VALID_CREDENTIALS[username] && VALID_CREDENTIALS[username] === password) {
+        // Save login state
+        if (rememberMe) {
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', username);
+        } else {
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('username', username);
+        }
+        
+        // Hide login page and show main app
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'flex';
+        
+        // Update user info in header
+        const userNameEl = document.querySelector('.user-name');
+        if (userNameEl) {
+            userNameEl.textContent = username.charAt(0).toUpperCase() + username.slice(1);
+        }
+        
+        // Initialize app
+        fetchGoogleSheetsData();
+        updateDashboardSummary();
+    } else {
+        alert('Invalid username or password. Please try again.\n\nDefault credentials:\nUsername: admin\nPassword: admin123');
+    }
+}
+
+// Check if user is already logged in
+function checkLoginStatus() {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') || sessionStorage.getItem('isLoggedIn');
+    const username = localStorage.getItem('username') || sessionStorage.getItem('username');
+    
+    if (isLoggedIn === 'true') {
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'flex';
+        
+        // Update user info in header
+        const userNameEl = document.querySelector('.user-name');
+        if (userNameEl && username) {
+            userNameEl.textContent = username.charAt(0).toUpperCase() + username.slice(1);
+        }
+    }
+}
+
+// Logout function
+function logout() {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('username');
+    sessionStorage.removeItem('isLoggedIn');
+    sessionStorage.removeItem('username');
+    
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'none';
+    
+    // Clear form
+    document.getElementById('loginForm').reset();
+}
+
 // Device data storage (fallback values)
 let devicesData = {
     'UPS-DC-001': { model: 'APC Smart-UPS', spec: '10kVA', voltage: '230V', current: '43.5A', load: '62%', runtime: '45m', image: '' },
@@ -125,6 +200,58 @@ async function fetchGoogleSheetsData() {
     }
 }
 
+// Update dashboard summary data
+function updateDashboardSummary() {
+    // Energy Meter Summary
+    const dashEbUnit = document.getElementById('dashEbUnit');
+    const dashEbLoad = document.getElementById('dashEbLoad');
+    const dashGenUnit = document.getElementById('dashGenUnit');
+    const dashGenLoad = document.getElementById('dashGenLoad');
+    
+    if (dashEbUnit) dashEbUnit.textContent = (1200 + Math.random() * 100).toFixed(2) + ' kWh';
+    if (dashEbLoad) dashEbLoad.textContent = (70 + Math.random() * 20).toFixed(1) + '%';
+    if (dashGenUnit) dashGenUnit.textContent = (800 + Math.random() * 100).toFixed(2) + ' kWh';
+    if (dashGenLoad) dashGenLoad.textContent = (40 + Math.random() * 15).toFixed(1) + '%';
+    
+    // UPS Devices Summary
+    const devices = Object.values(devicesData);
+    const totalDevices = devices.length;
+    const avgLoad = devices.reduce((sum, dev) => sum + parseFloat(dev.load), 0) / totalDevices;
+    const totalRuntime = devices.reduce((sum, dev) => sum + parseFloat(dev.runtime), 0);
+    
+    const dashTotalUps = document.getElementById('dashTotalUps');
+    const dashAvgVoltage = document.getElementById('dashAvgVoltage');
+    const dashAvgLoad = document.getElementById('dashAvgLoad');
+    const dashTotalRuntime = document.getElementById('dashTotalRuntime');
+    
+    if (dashTotalUps) dashTotalUps.textContent = totalDevices;
+    if (dashAvgVoltage) dashAvgVoltage.textContent = '230V';
+    if (dashAvgLoad) dashAvgLoad.textContent = avgLoad.toFixed(1) + '%';
+    if (dashTotalRuntime) dashTotalRuntime.textContent = Math.round(totalRuntime) + 'min';
+    
+    // Water Consumption Summary
+    const dashCafeteria = document.getElementById('dashCafeteria');
+    const dashWashArea = document.getElementById('dashWashArea');
+    const dashPantry = document.getElementById('dashPantry');
+    const dashKitchen = document.getElementById('dashKitchen');
+    
+    if (dashCafeteria) dashCafeteria.textContent = (1200 + Math.floor(Math.random() * 100)).toLocaleString() + ' L';
+    if (dashWashArea) dashWashArea.textContent = (800 + Math.floor(Math.random() * 100)).toLocaleString() + ' L';
+    if (dashPantry) dashPantry.textContent = (400 + Math.floor(Math.random() * 50)).toLocaleString() + ' L';
+    if (dashKitchen) dashKitchen.textContent = (1800 + Math.floor(Math.random() * 150)).toLocaleString() + ' L';
+    
+    // Asset Tracking Summary
+    const dashTotalAssets = document.getElementById('dashTotalAssets');
+    const dashActiveAssets = document.getElementById('dashActiveAssets');
+    const dashMaintenanceAssets = document.getElementById('dashMaintenanceAssets');
+    const dashInactiveAssets = document.getElementById('dashInactiveAssets');
+    
+    if (dashTotalAssets) dashTotalAssets.textContent = '15';
+    if (dashActiveAssets) dashActiveAssets.textContent = '12';
+    if (dashMaintenanceAssets) dashMaintenanceAssets.textContent = '2';
+    if (dashInactiveAssets) dashInactiveAssets.textContent = '1';
+}
+
 // Update the devices table with current data
 function updateDevicesTable() {
     // Get all device ID cells
@@ -200,6 +327,21 @@ document.querySelectorAll('td.device-id').forEach(td => {
     td.setAttribute('data-device-id', deviceId);
 });
 
+// Navigation helper function
+function navigateToPage(event, pageName) {
+    event.preventDefault();
+    
+    // Find and click the corresponding nav item
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        const spans = item.querySelectorAll('span');
+        const itemName = spans[1] ? spans[1].textContent.trim() : '';
+        if (itemName === pageName) {
+            item.click();
+        }
+    });
+}
+
 // Add interactivity to navigation items
 document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', function(e) {
@@ -215,18 +357,27 @@ document.querySelectorAll('.nav-item').forEach(item => {
         
         // Hide all pages
         const dashboardPage = document.getElementById('dashboardPage');
+        const energyMeterPage = document.getElementById('energyMeterPage');
         const upsDevicesPage = document.getElementById('upsDevicesPage');
+        const waterConsumptionPage = document.getElementById('waterConsumptionPage');
         const reportsPage = document.getElementById('reportsPage');
+        const assetTaggingPage = document.getElementById('assetTaggingPage');
         const settingsPage = document.getElementById('settingsPage');
         
         console.log('Dashboard page element:', dashboardPage);
+        console.log('Energy Meter page element:', energyMeterPage);
         console.log('UPS Devices page element:', upsDevicesPage);
+        console.log('Water Consumption page element:', waterConsumptionPage);
         console.log('Reports page element:', reportsPage);
+        console.log('Asset Tagging page element:', assetTaggingPage);
         console.log('Settings page element:', settingsPage);
         
         if (dashboardPage) dashboardPage.style.display = 'none';
+        if (energyMeterPage) energyMeterPage.style.display = 'none';
         if (upsDevicesPage) upsDevicesPage.style.display = 'none';
+        if (waterConsumptionPage) waterConsumptionPage.style.display = 'none';
         if (reportsPage) reportsPage.style.display = 'none';
+        if (assetTaggingPage) assetTaggingPage.style.display = 'none';
         if (settingsPage) settingsPage.style.display = 'none';
         
         // Show selected page
@@ -236,6 +387,13 @@ document.querySelectorAll('.nav-item').forEach(item => {
                 console.log('Showing Dashboard');
                 // Fetch latest data when Dashboard is opened
                 fetchGoogleSheetsData();
+                updateDashboardSummary();
+            }
+        } else if (pageName === 'Energy Meter') {
+            if (energyMeterPage) {
+                energyMeterPage.style.display = 'block';
+                console.log('Showing Energy Meter');
+                updateEnergyMeterData();
             }
         } else if (pageName === 'UPS Devices') {
             if (upsDevicesPage) {
@@ -244,12 +402,23 @@ document.querySelectorAll('.nav-item').forEach(item => {
                 // Fetch latest data when UPS Devices page is opened
                 fetchGoogleSheetsData();
             }
+        } else if (pageName === 'Water Consumption') {
+            if (waterConsumptionPage) {
+                waterConsumptionPage.style.display = 'block';
+                console.log('Showing Water Consumption');
+                updateWaterConsumptionData();
+            }
         } else if (pageName === 'Reports') {
             if (reportsPage) {
                 reportsPage.style.display = 'block';
                 console.log('Showing Reports');
                 // Fetch latest data when Reports page is opened
                 fetchGoogleSheetsData();
+            }
+        } else if (pageName === 'Asset Tagging') {
+            if (assetTaggingPage) {
+                assetTaggingPage.style.display = 'block';
+                console.log('Showing Asset Tagging');
             }
         } else if (pageName === 'Settings') {
             if (settingsPage) {
@@ -260,6 +429,12 @@ document.querySelectorAll('.nav-item').forEach(item => {
             // For other pages, show dashboard for now
             if (dashboardPage) dashboardPage.style.display = 'block';
             alert(`${pageName} page - Coming soon!`);
+        }
+        
+        // Scroll to top of main content area
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.scrollTop = 0;
         }
     });
 });
@@ -292,7 +467,9 @@ setInterval(fetchGoogleSheetsData, 2000);
 
 // Initial fetch on page load
 window.addEventListener('load', () => {
+    checkLoginStatus();
     fetchGoogleSheetsData();
+    updateDashboardSummary();
 });
 
 // Add notification click handler
@@ -580,6 +757,210 @@ function closeImageModal() {
     modal.classList.remove('active');
     // Clear iframe to stop loading
     modalIframe.src = '';
+}
+
+// Energy Meter functions
+function updateEnergyMeterData() {
+    // Simulate real-time energy meter data for EB
+    // In production, this would fetch from your energy meter API or database
+    const ebRunningUnit = (1200 + Math.random() * 100).toFixed(2);
+    const ebLoad = (70 + Math.random() * 20).toFixed(1);
+    const ebFrequency = (49.95 + Math.random() * 0.15).toFixed(2);
+    const ebPreviousUnit = (950 + Math.random() * 100).toFixed(2);
+    const ebPowerFactor = (0.90 + Math.random() * 0.09).toFixed(2);
+    
+    // Simulate real-time energy meter data for Generator
+    const genRunningUnit = (800 + Math.random() * 100).toFixed(2);
+    const genLoad = (40 + Math.random() * 15).toFixed(1);
+    const genFrequency = (49.95 + Math.random() * 0.15).toFixed(2);
+    const genPreviousUnit = (700 + Math.random() * 80).toFixed(2);
+    const genPowerFactor = (0.88 + Math.random() * 0.08).toFixed(2);
+    
+    // Update EB DOM elements
+    const ebRunningUnitEl = document.getElementById('ebRunningUnit');
+    const ebLoadEl = document.getElementById('ebLoad');
+    const ebFrequencyEl = document.getElementById('ebFrequency');
+    const ebPreviousUnitEl = document.getElementById('ebPreviousUnit');
+    const ebPowerFactorEl = document.getElementById('ebPowerFactor');
+    
+    if (ebRunningUnitEl) ebRunningUnitEl.textContent = ebRunningUnit;
+    if (ebLoadEl) ebLoadEl.textContent = ebLoad;
+    if (ebFrequencyEl) ebFrequencyEl.textContent = ebFrequency;
+    if (ebPreviousUnitEl) ebPreviousUnitEl.textContent = ebPreviousUnit;
+    if (ebPowerFactorEl) ebPowerFactorEl.textContent = ebPowerFactor;
+    
+    // Update Generator DOM elements
+    const genRunningUnitEl = document.getElementById('genRunningUnit');
+    const genLoadEl = document.getElementById('genLoad');
+    const genFrequencyEl = document.getElementById('genFrequency');
+    const genPreviousUnitEl = document.getElementById('genPreviousUnit');
+    const genPowerFactorEl = document.getElementById('genPowerFactor');
+    
+    if (genRunningUnitEl) genRunningUnitEl.textContent = genRunningUnit;
+    if (genLoadEl) genLoadEl.textContent = genLoad;
+    if (genFrequencyEl) genFrequencyEl.textContent = genFrequency;
+    if (genPreviousUnitEl) genPreviousUnitEl.textContent = genPreviousUnit;
+    if (genPowerFactorEl) genPowerFactorEl.textContent = genPowerFactor;
+    
+    // Auto-refresh every 5 seconds if Energy Meter page is visible
+    const energyMeterPage = document.getElementById('energyMeterPage');
+    if (energyMeterPage && energyMeterPage.style.display !== 'none') {
+        setTimeout(updateEnergyMeterData, 5000);
+    }
+}
+
+// Toggle energy section (EB/Generator)
+function toggleEnergySection(section) {
+    const metricsGrid = document.getElementById(`${section}Metrics`);
+    const toggleBtn = document.getElementById(`${section}ToggleBtn`);
+    const toggleText = toggleBtn?.querySelector('.toggle-text');
+    
+    if (metricsGrid && toggleBtn) {
+        metricsGrid.classList.toggle('collapsed');
+        toggleBtn.classList.toggle('collapsed');
+        
+        if (metricsGrid.classList.contains('collapsed')) {
+            toggleText.textContent = 'Show More';
+        } else {
+            toggleText.textContent = 'Show Less';
+        }
+    }
+}
+
+function toggleGeneratorSection(section) {
+    toggleEnergySection(section);
+}
+
+// Switch EB Model
+function switchEBModel(modelId) {
+    console.log('Switching to EB model:', modelId);
+    // Update EB data based on selected model
+    // In production, this would fetch data for the specific EB model
+    updateEnergyMeterData();
+}
+
+// Switch Generator Model
+function switchGeneratorModel(modelId) {
+    console.log('Switching to Generator model:', modelId);
+    // Update Generator data based on selected model
+    // In production, this would fetch data for the specific generator
+    updateEnergyMeterData();
+}
+
+// UPS Reading Alert System
+let readingTimer = null;
+let timeRemainingSeconds = 30; // 30 seconds for testing
+
+function startReadingAlert() {
+    // Clear any existing timer
+    if (readingTimer) {
+        clearInterval(readingTimer);
+    }
+    
+    // Reset timer
+    timeRemainingSeconds = 30; // 30 seconds for testing
+    updateTimeDisplay();
+    
+    // Update timer every second
+    readingTimer = setInterval(() => {
+        timeRemainingSeconds--;
+        
+        if (timeRemainingSeconds <= 0) {
+            // Show alert
+            showReadingAlert();
+            // Reset timer to 30 seconds
+            timeRemainingSeconds = 30;
+        }
+        
+        updateTimeDisplay();
+    }, 1000);
+}
+
+function updateTimeDisplay() {
+    const minutes = Math.floor(timeRemainingSeconds / 60);
+    const seconds = timeRemainingSeconds % 60;
+    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    const timeRemainingEl = document.getElementById('timeRemaining');
+    if (timeRemainingEl) {
+        timeRemainingEl.textContent = timeString;
+    }
+}
+
+function showReadingAlert() {
+    const alertBox = document.getElementById('alertBox');
+    const alertTitle = document.getElementById('alertTitle');
+    const alertMessage = document.getElementById('alertMessage');
+    
+    if (alertBox && alertTitle && alertMessage) {
+        // Change alert appearance to urgent state
+        alertBox.classList.add('alert-urgent');
+        alertTitle.textContent = '⚠️ TIME TO TAKE READINGS!';
+        alertMessage.innerHTML = 'Please record the readings for all UPS devices now.';
+        
+        // Keep urgent state for 5 seconds, then reset
+        setTimeout(() => {
+            alertBox.classList.remove('alert-urgent');
+            alertTitle.textContent = 'Reading Reminder';
+        }, 5000);
+    }
+}
+
+// Water Consumption functions
+function updateWaterConsumptionData() {
+    // Simulate real-time water consumption data
+    // In production, this would fetch from your water meter API or database
+    
+    // Weekly totals
+    const cafeteriaWeek = Math.floor(1200 + Math.random() * 100);
+    const washAreaWeek = Math.floor(800 + Math.random() * 100);
+    const pantryWeek = Math.floor(400 + Math.random() * 50);
+    const kitchenWeek = Math.floor(1800 + Math.random() * 150);
+    
+    // Daily consumption (roughly 1/5 of weekly)
+    const cafeteriaToday = Math.floor(cafeteriaWeek / 5 + Math.random() * 20);
+    const washAreaToday = Math.floor(washAreaWeek / 5 + Math.random() * 15);
+    const pantryToday = Math.floor(pantryWeek / 5 + Math.random() * 10);
+    const kitchenToday = Math.floor(kitchenWeek / 5 + Math.random() * 25);
+    
+    // Update weekly totals
+    const cafeteriaWaterEl = document.getElementById('cafeteriaWater');
+    const washAreaWaterEl = document.getElementById('washAreaWater');
+    const pantryWaterEl = document.getElementById('pantryWater');
+    const kitchenWaterEl = document.getElementById('kitchenWater');
+    
+    if (cafeteriaWaterEl) cafeteriaWaterEl.textContent = cafeteriaWeek.toLocaleString();
+    if (washAreaWaterEl) washAreaWaterEl.textContent = washAreaWeek.toLocaleString();
+    if (pantryWaterEl) pantryWaterEl.textContent = pantryWeek.toLocaleString();
+    if (kitchenWaterEl) kitchenWaterEl.textContent = kitchenWeek.toLocaleString();
+    
+    // Update today values
+    const cafeteriaTodayEl = document.getElementById('cafeteriaToday');
+    const washAreaTodayEl = document.getElementById('washAreaToday');
+    const pantryTodayEl = document.getElementById('pantryToday');
+    const kitchenTodayEl = document.getElementById('kitchenToday');
+    
+    if (cafeteriaTodayEl) cafeteriaTodayEl.textContent = cafeteriaToday + ' L';
+    if (washAreaTodayEl) washAreaTodayEl.textContent = washAreaToday + ' L';
+    if (pantryTodayEl) pantryTodayEl.textContent = pantryToday + ' L';
+    if (kitchenTodayEl) kitchenTodayEl.textContent = kitchenToday + ' L';
+    
+    // Update week values
+    const cafeteriaWeekEl = document.getElementById('cafeteriaWeek');
+    const washAreaWeekEl = document.getElementById('washAreaWeek');
+    const pantryWeekEl = document.getElementById('pantryWeek');
+    const kitchenWeekEl = document.getElementById('kitchenWeek');
+    
+    if (cafeteriaWeekEl) cafeteriaWeekEl.textContent = cafeteriaWeek.toLocaleString() + ' L';
+    if (washAreaWeekEl) washAreaWeekEl.textContent = washAreaWeek.toLocaleString() + ' L';
+    if (pantryWeekEl) pantryWeekEl.textContent = pantryWeek.toLocaleString() + ' L';
+    if (kitchenWeekEl) kitchenWeekEl.textContent = kitchenWeek.toLocaleString() + ' L';
+    
+    // Auto-refresh every 10 seconds if Water Consumption page is visible
+    const waterConsumptionPage = document.getElementById('waterConsumptionPage');
+    if (waterConsumptionPage && waterConsumptionPage.style.display !== 'none') {
+        setTimeout(updateWaterConsumptionData, 10000);
+    }
 }
 
 // Settings page functions
